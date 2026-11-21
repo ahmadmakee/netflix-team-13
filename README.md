@@ -1,30 +1,39 @@
-## My Contribution to the Netflix Project
+Netflix Team 13 analysis
 
-In this project, I worked on a Netflix data analytics system using Python. The main goal was to organize movie and user data, analyze watch history, and generate useful results.
 
-### What I Did
 
-First, I prepared three CSV files: `movies.csv`, `users.csv`, and `watchhistory.csv`. These files contain information about movies, users, ratings, and viewing activity.
+**Selected assignment challenge:** Challenge 1 — What Makes Content Popular on Netflix?
 
-After that, I used Pandas to read the CSV files and merge them using `user_id` and `movie_id`. This allowed me to combine the information into one DataFrame.
+## Files
 
-I also worked with Python functions to analyze the data. For example, I used `groupby()` to organize records, `mean()` to calculate averages, and `idxmax()` to find the highest result.
+- `Netflix_Analysis_Simplified.ipynb` — completed, executed Jupyter Notebook with explanations and 3 labeled charts
+- `netflix_simple.py` — simple script alternative for PyCharm or VS Code
+- `AGILE_PROJECT_PLAN.md` — sprint goal, Kanban board, two risks and retrospective template
+- `requirements_simplified.txt` — dependencies
+- `charts/` — exported PNG charts
+- `Netflix_Analysis_Simplified.html` — optional executed HTML notebook export
 
-The project also includes functions for finding the most watched movie and calculating average watch time when the required data is available.
+The original repository already contains `movies.csv`, `users.csv` and `watchhistory.csv`. **Keep those files unchanged.**
 
-### What I Learned
+## Run
 
-This exercise helped me understand how to:
+1. Open the repository folder in VS Code, with the Python and Jupyter extensions installed.
+2. Run `py -m pip install -r requirements_simplified.txt` in its terminal.
+3. Open `Netflix_Analysis_Simplified.ipynb`, select the Python kernel, and click **Run All**.
+4. Verify three charts, and take a screenshot of the final successfully executed notebook.
 
-- Work with CSV files using Python and Pandas.
-- Combine datasets using `merge()`.
-- Create functions to analyze data.
-- Organize code into separate files.
-- Use Git to track changes.
-- Commit and push code to GitHub.
+To run the optional script, use `py netflix_simple.py`.
 
-### Challenges
+**Important:** These 10 watch events are only a tiny classroom example, not representative Netflix-wide popularity data. Complete real team names, actual task statuses and sprint retrospective before submission.
 
-One challenge was understanding how to connect the different CSV files correctly. I also practiced using Git Bash and learned the difference between `git add`, `git commit`, and `git push`.
+## Commit to a separate branch
 
-Overall, this project helped me improve my Python programming, data analysis, and Git skills.
+Inside your local clone of https://github.com/ahmadmakee/netflix-team-13, make a branch using `git checkout -b simplified-netflix-analysis`, copy the files from this ZIP into the repository root, then run:
+
+```bash
+git add Netflix_Analysis_Simplified.ipynb netflix_simple.py AGILE_PROJECT_PLAN.md README_SIMPLIFIED.md requirements_simplified.txt Netflix_Analysis_Simplified.html charts/
+git commit -m "Add simplified Netflix notebook and Agile project plan"
+git push -u origin simplified-netflix-analysis
+```
+
+Then open a pull request to `main` on GitHub.

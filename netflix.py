@@ -1,150 +1,87 @@
 
-import logging
-from collections import Counter
 
-# Bonus: Logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s: %(message)s"
-)
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
 
+# Create a folder for the charts.
+Path("charts").mkdir(exist_ok=True)
 
-# Classes
-class Movie:
-    def __init__(self, movie_id, title, genre):
-        self.movie_id = movie_id
-        self.title = title
-        self.genre = genre
+movies = pd.read_csv("movies.csv")
+users = pd.read_csv("users.csv")
+watch_history = pd.read_csv("watchhistory.csv")
 
+print("Movies:", len(movies))
+print("Users:", len(users))
+print("Viewing records:", len(watch_history))
 
-class User:
-    def __init__(self, user_id, name):
-        self.user_id = user_id
-        self.name = name
+print("MOVIES")
+print(movies.head())
+print("\nWATCH HISTORY")
+print(watch_history.head())
+print("\nMISSING VALUES IN WATCH HISTORY")
+print(watch_history.isna().sum())
 
+# Clean the three tables.
+movies = movies.drop_duplicates(subset="movie_id").dropna(subset=["movie_id", "title", "genres"])
+users = users.drop_duplicates(subset="user_id").dropna(subset=["user_id", "name"])
+watch_history["rating"] = pd.to_numeric(watch_history["rating"], errors="coerce")
+watch_history = watch_history.dropna(subset=["user_id", "movie_id", "rating"])
+watch_history = watch_history[watch_history["rating"].between(1, 5)]
 
-class WatchHistory:
-    def __init__(self, user_id, movie_id, rating):
-        self.user_id = user_id
-        self.movie_id = movie_id
-        self.rating = rating
+# Combine viewing events with movie titles and user names.
+viewing_data = watch_history.merge(movies, on="movie_id", how="inner")
+viewing_data = viewing_data.merge(users, on="user_id", how="inner")
 
+print("Valid viewing records after cleaning:", len(watch_history))
+print("Matched viewing records after merging:", len(viewing_data))
+print("Unmatched records excluded:", len(watch_history) - len(viewing_data))
+print(viewing_data[["name", "title", "genres", "rating"]].head())
 
-# Part 1: Extract
-def extract_data():
-    logging.info("Extracting data...")
+movie_views = viewing_data["title"].value_counts()
+average_ratings = viewing_data.groupby("title")["rating"].mean().sort_values(ascending=False)
 
-    movies = [
-        Movie(1, "The Matrix", "Sci-Fi"),
-        Movie(2, "Inception", "Sci-Fi"),
-        Movie(3, "Interstellar", "Sci-Fi")
-    ]
+# Some movies have more than one genre. Count each matching genre.
+genre_views = viewing_data.assign(
+    genre=viewing_data["genres"].str.split("|", regex=False)
+).explode("genre")["genre"].value_counts()
 
-    users = [
-        User(101, "Ada"),
-        User(102, "Charles"),
-        User(103, "Linus")
-    ]
+print("Total views in sample:", len(viewing_data))
+print("Unique viewers:", viewing_data["user_id"].nunique())
+print("Average rating:", round(viewing_data["rating"].mean(), 2))
+print("\nViews per movie:\n", movie_views)
+print("\nView events involving each genre:\n", genre_views)
 
-    history = [
-        WatchHistory(101, 1, 5),
-        WatchHistory(101, 2, 4),
-        WatchHistory(102, 1, 5),
-        WatchHistory(103, 3, 5),
-        WatchHistory(103, 1, 4),
-        WatchHistory(103, 2, 3)
-    ]
+plt.figure(figsize=(9, 4))
+movie_views.plot(kind="bar")
+plt.title("Recorded Viewing Events by Movie")
+plt.xlabel("Movie")
+plt.ylabel("Number of viewing events")
+plt.xticks(rotation=45, ha="right")
+plt.tight_layout()
+plt.savefig("charts/01_movie_views.png", dpi=150)
+plt.close()
 
-    return movies, users, history
+plt.figure(figsize=(9, 4))
+average_ratings.plot(kind="bar")
+plt.title("Average Viewer Rating by Movie")
+plt.xlabel("Movie")
+plt.ylabel("Average rating (1 to 5)")
+plt.ylim(0, 5.5)
+plt.xticks(rotation=45, ha="right")
+plt.tight_layout()
+plt.savefig("charts/02_movie_ratings.png", dpi=150)
+plt.close()
 
+plt.figure(figsize=(9, 4))
+genre_views.plot(kind="bar")
+plt.title("Viewing Events Associated with Each Genre")
+plt.xlabel("Genre")
+plt.ylabel("Events involving the genre")
+plt.xticks(rotation=45, ha="right")
+plt.tight_layout()
+plt.savefig("charts/03_genre_views.png", dpi=150)
+plt.close()
 
-# Part 2: Transform
-def transform_data(movies, users, history):
-    logging.info("Transforming data...")
+print("Notebook finished successfully — 3 charts created in the charts folder.")
 
-    total_events = len(history)
-
-    average_rating = (
-        sum(record.rating for record in history) / total_events
-        if total_events else 0
-    )
-
-    movie_counts = Counter(
-        record.movie_id for record in history
-    )
-
-    user_counts = Counter(
-        record.user_id for record in history
-    )
-
-    movie_names = {
-        movie.movie_id: movie.title for movie in movies
-    }
-
-    user_names = {
-        user.user_id: user.name for user in users
-    }
-
-    most_watched = (
-        movie_names[movie_counts.most_common(1)[0][0]]
-        if movie_counts else "None"
-    )
-
-    most_active = (
-        user_names[user_counts.most_common(1)[0][0]]
-        if user_counts else "None"
-    )
-
-    ranking = [
-        f"{movie_names[movie_id]} ({count} views)"
-        for movie_id, count in movie_counts.most_common()
-    ]
-
-    report = {
-        "Total Watch Events": total_events,
-        "Average Rating": round(average_rating, 2),
-        "Most Watched Movie": most_watched,
-        "Most Active User": most_active,
-        "Active Users": len(user_counts),
-        "Movie Popularity Ranking": ranking
-    }
-
-    return report
-
-
-# Part 3: Load
-def load_report(report):
-    logging.info("Saving report...")
-
-    lines = [
-        "NETFLIX VIEWING ANALYTICS REPORT",
-        "================================"
-    ]
-
-    for key, value in report.items():
-        if key == "Movie Popularity Ranking":
-            lines.append("\nMovie Popularity Ranking:")
-            for position, movie in enumerate(value, start=1):
-                lines.append(f"{position}. {movie}")
-        else:
-            lines.append(f"{key}: {value}")
-
-    report_text = "\n".join(lines)
-
-    print("\n" + report_text)
-
-    with open("netflix_report.txt", "w", encoding="utf-8") as file:
-        file.write(report_text)
-
-    logging.info("Report saved to netflix_report.txt")
-
-
-# Part 4: Complete Pipeline
-def main():
-    movies, users, history = extract_data()
-    report = transform_data(movies, users, history)
-    load_report(report)
-
-
-if __name__ == "__main__":
-    main()
